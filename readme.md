@@ -51,6 +51,8 @@ python server.py
 2. Open the web application in your browser at http://localhost:5000.
 3. Use the UI to generate audio files based on text prompts and selected speakers.
 
+![image](https://user-images.githubusercontent.com/1783800/236707977-77ac3a52-f09f-4b2d-974c-33c5c75a07fe.png)
+
 ## License
 
 This project is licensed under the terms of the [Unlicense](https://unlicense.org/).
