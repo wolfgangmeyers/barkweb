@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Bark Audio Generator</title>
+        <link
+            rel="stylesheet"
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <h1 class="text-center my-4">Bark Audio Generator</h1>
+
+            <div class="form-group">
+                <label for="speaker">Speaker:</label>
+                <select class="form-control" id="speaker">
+                    <option selected>None</option>
+                    <option value="v2/en_speaker_2">en_speaker_2</option>
+                    <!-- Add more speaker options here -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="text_prompt">Text Prompt:</label>
+                <textarea
+                    class="form-control"
+                    id="text_prompt"
+                    rows="5"
+                ></textarea>
+            </div>
+
+            <button id="generate_btn" class="btn btn-primary">Generate</button>
+
+            <h2 class="text-center my-4">Wav Files</h2>
+            <button id="refresh_btn" class="btn btn-secondary mb-3">
+                Refresh List
+            </button>
+            <ul id="wav_list" class="list-group"></ul>
+        </div>
+
+        <script>
+            function refreshWavList() {
+                $.getJSON("/list", function (data) {
+                    $("#wav_list").empty();
+                    data.forEach(function (filename) {
+                        var listItem = $(
+                            "<li class='list-group-item d-flex justify-content-between align-items-center'></li>"
+                        );
+                        listItem.text(filename);
+
+                        var audioControl = $("<audio controls></audio>").attr(
+                            "src",
+                            "/get/" + filename
+                        );
+                        listItem.append(audioControl);
+
+                        var deleteBtn = $(
+                            "<button class='btn btn-danger btn-sm'>Delete</button>"
+                        );
+                        deleteBtn.click(function () {
+                            $.ajax({
+                                url: "/delete/" + filename,
+                                type: "DELETE",
+                                success: function (result) {
+                                    refreshWavList();
+                                },
+                            });
+                        });
+                        listItem.append(deleteBtn);
+
+                        $("#wav_list").append(listItem);
+                    });
+                });
+            }
+
+            $(document).ready(function () {
+                $("#generate_btn").click(function () {
+                    var prompt = $("#text_prompt").val();
+                    var speaker = $("#speaker").val();
+                    // disable the generate button and set spinner
+                    $("#generate_btn").prop("disabled", true);
+                    $("#generate_btn").html(
+                        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Generating...'
+                    );
+                    $.ajax({
+                        url: "/create",
+                        type: "POST",
+                        data: JSON.stringify({
+                            text_prompt: prompt,
+                            speaker: speaker,
+                        }),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (data) {
+                            refreshWavList();
+                            // enable the generate button and set text
+                            $("#generate_btn").prop("disabled", false);
+                            $("#generate_btn").html("Generate");
+                        },
+                    });
+                });
+
+                $("#refresh_btn").click(function () {
+                    refreshWavList();
+                });
+
+                refreshWavList();
+            });
+        </script>
+    </body>
+</html>
