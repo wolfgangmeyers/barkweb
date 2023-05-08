@@ -42,18 +42,56 @@
             </div>
 
             <button id="generate_btn" class="btn btn-primary">Generate</button>
+            <hr />
 
             <h2 class="text-center my-4">Wav Files</h2>
             <button id="refresh_btn" class="btn btn-secondary mb-3">
                 Refresh List
             </button>
             <ul id="wav_list" class="list-group"></ul>
+            <hr />
+            <h2 class="text-center my-4">Uploads</h2>
+            <div class="form-group">
+                <label for="upload_wav">Upload Wav File:</label>
+                <input
+                    type="file"
+                    class="form-control-file"
+                    id="upload_wav"
+                    accept=".wav"
+                />
+            </div>
+            <button id="upload_btn" class="btn btn-primary">
+                Upload New Wav
+            </button>
+            <hr />
+            <h2 class="text-center my-4">Create Voice</h2>
+            <div class="form-group">
+                <label for="audio_sample">Audio Sample:</label>
+                <select class="form-control" id="audio_sample"></select>
+            </div>
+            <div class="form-group">
+                <label for="voice_text">Voice Text:</label>
+                <textarea
+                    class="form-control"
+                    id="voice_text"
+                    rows="3"
+                ></textarea>
+            </div>
+            <div class="form-group">
+                <label for="voice_name">Voice Name:</label>
+                <input type="text" class="form-control" id="voice_name" />
+            </div>
+            <button id="create_voice_btn" class="btn btn-primary">
+                Create Voice
+            </button>
+            <hr />
         </div>
 
         <script>
             function refreshWavList() {
                 $.getJSON("/list", function (data) {
                     $("#wav_list").empty();
+                    $("#audio_sample").empty();
                     data.forEach(function (filename) {
                         var listItem = $(
                             "<li class='list-group-item d-flex justify-content-between align-items-center'></li>"
@@ -81,6 +119,28 @@
                         listItem.append(deleteBtn);
 
                         $("#wav_list").append(listItem);
+                        $("#audio_sample").append(
+                            $("<option>").text(filename).val(filename)
+                        );
+                    });
+                });
+            }
+
+            function populateVoices() {
+                $.getJSON("/voices", function (data) {
+                    $("#speaker").empty();
+                    $("#speaker").append(
+                        $("<option>").text("None").val("None")
+                    );
+                    // sort data alphabetically
+                    data.sort();
+                    data.forEach(function (filename) {
+                        var voiceLabel = filename.replace(".npz", "");
+                        $("#speaker").append(
+                            $("<option>")
+                                .text(voiceLabel)
+                                .val(voiceLabel)
+                        );
                     });
                 });
             }
@@ -117,6 +177,64 @@
                 });
 
                 refreshWavList();
+                populateVoices();
+
+                $("#upload_btn").click(function () {
+                    var fileInput = $("#upload_wav")[0];
+                    if (fileInput.files.length === 0) {
+                        alert("Please select a .wav file to upload.");
+                        return;
+                    }
+                    var file = fileInput.files[0];
+                    if (!file.name.endsWith(".wav")) {
+                        alert("Invalid file type. Please upload a .wav file.");
+                        return;
+                    }
+                    var formData = new FormData();
+                    formData.append("file", file);
+                    $.ajax({
+                        url: "/upload",
+                        type: "POST",
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        dataType: "json",
+                        success: function (data) {
+                            refreshWavList();
+                            // Clear the file input
+                            $("#upload_wav").val("");
+                        },
+                    });
+                });
+
+                $("#create_voice_btn").click(function () {
+                    var audioSample = $("#audio_sample").val();
+                    var voiceText = $("#voice_text").val();
+                    var voiceName = $("#voice_name").val();
+
+                    $("#create_voice_btn").prop("disabled", true);
+                    $("#create_voice_btn").html(
+                        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creating Voice...'
+                    );
+
+                    $.ajax({
+                        url: "/create_voice",
+                        type: "POST",
+                        data: JSON.stringify({
+                            audio_sample: audioSample,
+                            voice_text: voiceText,
+                            voice_name: voiceName,
+                        }),
+                        contentType: "application/json",
+                        dataType: "json",
+                        success: function (data) {
+                            // enable the create voice button and set text
+                            $("#create_voice_btn").prop("disabled", false);
+                            $("#create_voice_btn").html("Create Voice");
+                            populateVoices();
+                        },
+                    });
+                });
             });
         </script>
     </body>
