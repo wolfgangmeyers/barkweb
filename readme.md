@@ -1,6 +1,6 @@
 # Bark Audio Generator
 
-Bark Audio Generator is a web application that generates audio files using the Bark library. It provides a simple UI to input a text prompt and select a speaker, and then generates a WAV file based on the input.
+Bark Audio Generator is a web application that generates audio files using the [Bark](https://github.com/suno-ai/bark) library. It provides a simple UI to input a text prompt and select a speaker, and then generates a WAV file based on the input.
 
 ## Installation
 
